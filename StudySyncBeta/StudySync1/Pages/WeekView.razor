@@ -49,6 +49,8 @@
 }
 else
 {
+    <div class="row g-3">
+    <div class="col-12 col-lg-8">
     <div class="card p-3 mb-3" style="max-width:900px;">
         <h5>Add Activity</h5>
 
@@ -132,6 +134,51 @@ else
             }
         </tbody>
     </table>
+        </div>  @* closes col-12 col-lg-8 *@
+
+        @* Legend panel: keep simple for beta demo. Polish later if time. *@
+
+        <div class="col-12 col-lg-4">
+            <div class="card p-3 mb-3">
+                <h5 class="mb-3">Legend</h5>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #3b82f6;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Lecture</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #a855f7;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Activity</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #ef4444;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Study</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #22c55e;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Make-up Study</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #f59e0b;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Group Study</span>
+                </div>
+                <hr class="my-3" />
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="font-size:0.9rem; margin-right:10px;">⚠️</span>
+                    <span>Schedule adjusted (conflict)</span>
+                </div>
+
+                <div class="text-muted mt-1" style="font-size:0.8rem; opacity:0.85; margin-left:22px;">
+                    Example reason: “Moved due to activity: Football”
+                </div>
+            </div>
+        </div>
+    </div> @* closes row *@
 }
 
 @code {
