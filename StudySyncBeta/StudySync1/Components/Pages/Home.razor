@@ -1,0 +1,68 @@
+﻿@page "/"
+@using StudySync1.Services
+@rendermode Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer
+
+@inject NavigationManager Nav
+@inject AppStateService State
+
+<div class="card p-4" style="max-width: 950px;">
+    <div class="d-flex align-items-center gap-3">
+        <img src="Images/logo.png" alt="StudySync Logo" style="height:44px; width:44px; object-fit:contain;" />
+        <div>
+            <h2 class="mb-1">StudySync</h2>
+            <div class="text-muted">
+                Adaptive timetable organiser — auto-generates study plans, detects conflicts, and supports group scheduling.
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/week"))">
+            Open Week View
+        </button>
+
+        <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/group"))">
+            Open Group Availability
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_status))
+    {
+        <div class="alert alert-info mt-3 mb-0">@_status</div>
+    }
+</div>
+
+<div class="card p-4 mt-4" style="max-width: 950px;">
+    <h4 class="mb-2">Quick Demo Flow</h4>
+    <ol class="mb-0">
+        <li>Click <b>Seed Demo Data</b>.</li>
+        <li>Open <b>Week View</b> → choose a user → <b>Generate Study Plan</b>.</li>
+        <li>Add an activity that overlaps study → see <b>MakeUp</b> rescheduling + reason.</li>
+        <li>Open <b>Group Availability</b> → find a slot → <b>Create Group Session</b>.</li>
+        <li>Back to <b>Week View</b> → confirm GroupStudy appears for multiple users.</li>
+    </ol>
+</div>
+
+@code {
+    private string? _status;
+
+    private async Task SeedDemo()
+    {
+        _status = null;
+
+        try
+        {
+            await State.ResetAsync();
+            await State.SeedDemoAsync();
+            await State.ReloadAsync();
+
+            _status = "Demo data seeded successfully. Open Week View to begin.";
+        }
+        catch (Exception ex)
+        {
+            _status = "Error seeding demo data: " + ex.Message;
+        }
+    }
+}

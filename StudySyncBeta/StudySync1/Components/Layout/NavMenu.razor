@@ -1,0 +1,41 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="">
+            <img src="/images/logo.png" alt="StudySync Logo" style="height:28px; width:28px; object-fit:contain;" />
+            <span>StudySync</span>
+        </a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <!-- ✅ NEW: Week View -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="week">
+                <span class="bi bi-calendar-week-fill-nav-menu" aria-hidden="true"></span> Week View
+            </NavLink>
+        </div>
+
+        <!-- ✅ NEW: Group Availability -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="group">
+                <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> Group Availability
+            </NavLink>
+        </div>
+
+        <!-- ✅ NEW: State Test (optional but handy for dev/demo) -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="state-test">
+                <span class="bi bi-check2-square-nav-menu" aria-hidden="true"></span> State Test
+            </NavLink>
+        </div>
+    </nav>
+</div>

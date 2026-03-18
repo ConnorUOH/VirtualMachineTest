@@ -1,0 +1,163 @@
+﻿/* ================================
+   StudySync Calm Theme
+   Logo/Text Navy: #001F4D
+   Sidebar Oak: warm wood tone
+   Main body: soft light grey
+   ================================ */
+
+:root {
+    --navy: #001F4D;
+    /* Oak-like tones (calm + warm) */
+    --oak: #d6b98a; /* main oak */
+    --oak-dark: #caa874; /* hover/active */
+    --oak-border: #b88f5a;
+    /* Soft “dark-mode-ish” greys (low glare) */
+    --bg: #e7eaee;
+    --panel: #f2f4f7;
+    --panel-2: #ffffff;
+    --border: #d2d7df;
+}
+
+/* ---- Sidebar + scroll region (force override template gradient) ---- */
+.sidebar,
+.nav-scrollable {
+    background-image: none !important;
+    background: var(--oak) !important;
+}
+
+    /* Kill any gradient overlays from template */
+    .sidebar::before,
+    .sidebar::after,
+    .nav-scrollable::before,
+    .nav-scrollable::after {
+        background: none !important;
+        background-image: none !important;
+        content: none !important;
+    }
+
+/* ---- Top brand/header strip (oak but slightly darker) ---- */
+.top-row.navbar {
+    background-color: var(--oak-dark) !important;
+    border-bottom: 1px solid rgba(0,0,0,0.10);
+}
+
+/* Brand text color = logo navy */
+.navbar-brand {
+    color: var(--navy) !important;
+    font-weight: 700;
+}
+
+/* ---- Nav links: navy text on oak ---- */
+.nav-link {
+    color: var(--navy) !important;
+    font-weight: 600;
+}
+
+    /* Hover: a slightly darker oak highlight */
+    .nav-link:hover {
+        color: var(--navy) !important;
+        background-color: rgba(0, 31, 77, 0.06) !important;
+        border-radius: 10px;
+    }
+
+    /* Active nav item: subtle navy tint */
+    .nav-link.active {
+        background-color: rgba(0, 31, 77, 0.10) !important;
+        border-radius: 10px;
+    }
+
+    /* Optional: icons inherit the navy */
+    .nav-link span {
+        color: var(--navy) !important;
+    }
+
+/* ---- Main body background (soft grey, low glare) ---- */
+.page,
+main,
+.content,
+body {
+    background-color: var(--bg) !important;
+}
+
+/* Keep the main content area soft */
+main {
+    background-color: var(--bg) !important;
+}
+
+/* Cards/panels (forms, sections) */
+.card {
+    background: var(--panel) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 14px;
+}
+
+/* Table background polish */
+.table {
+    background: var(--panel-2) !important;
+    border-color: var(--border) !important;
+}
+
+    /* Optional: table header slightly tinted */
+    .table thead th {
+        background: #eef1f5 !important;
+    }
+
+/* ---- Headings + general text tone ---- */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--navy) !important;
+}
+
+/* Secondary text */
+.text-muted {
+    color: rgba(0, 31, 77, 0.65) !important;
+}
+
+/* ---- Buttons ---- */
+.btn-primary {
+    background-color: var(--navy) !important;
+    border-color: var(--navy) !important;
+}
+
+    .btn-primary:hover {
+        background-color: #002a66 !important;
+        border-color: #002a66 !important;
+    }
+
+/* Keep your green “Generate Study Plan” readable */
+.btn-success {
+    background-color: #16a34a !important;
+    border-color: #16a34a !important;
+}
+
+    .btn-success:hover {
+        background-color: #15803d !important;
+        border-color: #15803d !important;
+    }
+
+/* Outline danger buttons (Clear Study Blocks) */
+.btn-outline-danger {
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+}
+
+    .btn-outline-danger:hover {
+        background-color: #dc2626 !important;
+        color: white !important;
+    }
+
+/* ---- Inputs ---- */
+.form-control, .form-select {
+    border-radius: 10px;
+    border-color: var(--border) !important;
+}
+
+/* Make timetable/table cells slightly off-white */
+.table td {
+    background: #f7f8fa !important;
+}
+
+/* Make event blocks feel like cards */
+.table td div[style*="border-left:6px"] {
+        background: #ffffff !important;
+        border-radius: 8px;
+ }
