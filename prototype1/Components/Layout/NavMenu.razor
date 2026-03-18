@@ -1,0 +1,13 @@
+﻿@using prototype1.Services
+@inject AuthenticationService AuthService
+
+<MudNavMenu>
+    <MudText Typo="Typo.body2" Class="px-4 py-2 mud-text-secondary">
+        Logged in as: <strong>@AuthService.CurrentUser?.Username</strong>
+    </MudText>
+    <MudDivider Class="my-2" />
+    <MudNavLink href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink href="/Counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
+    <MudNavLink href="/Weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.WbSunny">Weather</MudNavLink>
+</MudNavMenu>
+

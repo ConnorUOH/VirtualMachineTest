@@ -1,0 +1,117 @@
+@page "/login"
+@using prototype1.Services
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Login</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Welcome Back</MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6">Please login to continue</MudText>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
+        }
+
+        <MudForm @ref="_form">
+            <MudTextField @bind-Value="_username" 
+                          Label="Username" 
+                          Variant="Variant.Outlined" 
+                          Required="true"
+                          RequiredError="Username is required"
+                          Class="mb-4"
+                          OnKeyDown="HandleKeyDown" />
+
+            <MudTextField @bind-Value="_password" 
+                          Label="Password" 
+                          Variant="Variant.Outlined" 
+                          InputType="InputType.Password"
+                          Required="true"
+                          RequiredError="Password is required"
+                          Class="mb-4"
+                          OnKeyDown="HandleKeyDown" />
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       FullWidth="true"
+                       OnClick="HandleLogin"
+                       Disabled="_isLoading"
+                       Class="mb-4">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                }
+                else
+                {
+                    <span>Login</span>
+                }
+            </MudButton>
+        </MudForm>
+
+        <MudDivider Class="my-4" />
+
+        <MudText Align="Align.Center">
+            Don't have an account? 
+            <MudLink Href="/register" Color="Color.Primary">Register here</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private MudForm? _form;
+    private string _username = string.Empty;
+    private string _password = string.Empty;
+    private string _errorMessage = string.Empty;
+    private bool _isLoading = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AuthService.InitializeAsync();
+            
+            if (AuthService.IsAuthenticated)
+            {
+                Navigation.NavigateTo("/", replace: true);
+            }
+            
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        _errorMessage = string.Empty;
+        _isLoading = true;
+
+        try
+        {
+            var result = await AuthService.LoginAsync(_username, _password);
+
+            if (result.Success)
+            {
+                Navigation.NavigateTo("/", replace: true);
+            }
+            else
+            {
+                _errorMessage = result.Message;
+                _isLoading = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "An error occurred during login. Please try again.";
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleLogin();
+        }
+    }
+}

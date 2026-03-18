@@ -1,0 +1,57 @@
+﻿@inherits LayoutComponentBase
+@using prototype1.Services
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    @if (AuthService.IsAuthenticated)
+    {
+        <MudAppBar>
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="DrawerToggle" />
+            MudBlazorApp
+            <MudSpacer />
+            <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="HandleLogout" Title="Logout" />
+        </MudAppBar>
+        <MudDrawer @bind-Open="@_drawerOpen">
+            <NavMenu/>
+        </MudDrawer>
+    }
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AuthService.InitializeAsync();
+            AuthService.OnAuthenticationStateChanged += StateHasChanged;
+            StateHasChanged();
+        }
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", replace: true);
+    }
+
+    public void Dispose()
+    {
+        AuthService.OnAuthenticationStateChanged -= StateHasChanged;
+    }
+}

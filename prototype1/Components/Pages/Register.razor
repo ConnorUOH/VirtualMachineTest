@@ -1,0 +1,119 @@
+@page "/register"
+@using prototype1.Services
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Register</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Create Account</MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6">Sign up to get started</MudText>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
+        }
+
+        @if (!string.IsNullOrEmpty(_successMessage))
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-4">@_successMessage</MudAlert>
+        }
+
+        <MudForm @ref="_form">
+            <MudTextField @bind-Value="_username" 
+                          Label="Username" 
+                          Variant="Variant.Outlined" 
+                          Required="true"
+                          RequiredError="Username is required"
+                          Class="mb-4" />
+
+            <MudTextField @bind-Value="_email" 
+                          Label="Email" 
+                          Variant="Variant.Outlined" 
+                          InputType="InputType.Email"
+                          Required="true"
+                          RequiredError="Email is required"
+                          Class="mb-4" />
+
+            <MudTextField @bind-Value="_password" 
+                          Label="Password" 
+                          Variant="Variant.Outlined" 
+                          InputType="InputType.Password"
+                          Required="true"
+                          RequiredError="Password is required"
+                          Class="mb-4" />
+
+            <MudTextField @bind-Value="_confirmPassword" 
+                          Label="Confirm Password" 
+                          Variant="Variant.Outlined" 
+                          InputType="InputType.Password"
+                          Required="true"
+                          RequiredError="Please confirm your password"
+                          Class="mb-4" />
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       FullWidth="true"
+                       OnClick="HandleRegister"
+                       Disabled="_isLoading"
+                       Class="mb-4">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                }
+                else
+                {
+                    <span>Register</span>
+                }
+            </MudButton>
+        </MudForm>
+
+        <MudDivider Class="my-4" />
+
+        <MudText Align="Align.Center">
+            Already have an account? 
+            <MudLink Href="/login" Color="Color.Primary">Login here</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private MudForm? _form;
+    private string _username = string.Empty;
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string _confirmPassword = string.Empty;
+    private string _errorMessage = string.Empty;
+    private string _successMessage = string.Empty;
+    private bool _isLoading = false;
+
+    private async Task HandleRegister()
+    {
+        _errorMessage = string.Empty;
+        _successMessage = string.Empty;
+
+        if (_password != _confirmPassword)
+        {
+            _errorMessage = "Passwords do not match.";
+            return;
+        }
+
+        _isLoading = true;
+
+        var result = await AuthService.RegisterAsync(_username, _email, _password);
+
+        _isLoading = false;
+
+        if (result.Success)
+        {
+            _successMessage = result.Message;
+            await Task.Delay(1500);
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            _errorMessage = result.Message;
+        }
+    }
+}

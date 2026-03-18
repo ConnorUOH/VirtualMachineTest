@@ -1,0 +1,31 @@
+﻿@page "/"
+@using prototype1.Services
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+
+<AuthGuard>
+    <PageTitle>Home</PageTitle>
+
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+        <MudText Typo="Typo.h3" GutterBottom="true">
+            Welcome, @AuthService.CurrentUser?.Username!
+        </MudText>
+
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Error" 
+                   OnClick="HandleLogout"
+                   Class="mt-4">
+            Logout
+        </MudButton>
+
+        <!-- Your existing content here -->
+    </MudContainer>
+</AuthGuard>
+
+@code {
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", replace: true);
+    }
+}
