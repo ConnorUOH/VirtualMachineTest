@@ -1,0 +1,436 @@
+﻿@page "/week"
+@using StudySync1.Models
+@using StudySync1.Services
+@using Microsoft.AspNetCore.Components.Web
+@rendermode Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer
+@inject StudySync1.Services.AppStateService State
+@inject StudySync1.Services.IScheduleService Scheduler
+
+<h3>Week View</h3>
+
+@if (!string.IsNullOrWhiteSpace(_fatal))
+{
+    <div class="alert alert-danger">
+        <pre style="white-space:pre-wrap;">@_fatal</pre>
+    </div>
+}
+
+<div class="mb-2">
+    <button class="btn btn-primary" @onclick="SeedIfEmpty">Load Demo Data</button>
+    <button class="btn btn-secondary ms-2" @onclick="PrevWeek">← Prev</button>
+    <button class="btn btn-secondary ms-2" @onclick="NextWeek">Next →</button>
+
+    <button class="btn btn-success ms-2" @onclick="GeneratePlan">Generate Study Plan</button>
+    <button class="btn btn-outline-danger ms-2" @onclick="ClearPlan">Clear Study Blocks</button>
+
+</div>
+
+<p class="text-muted">Last action: @_lastAction</p>
+
+<div class="mb-3">
+    @if (_app is not null && _app.Users.Count > 0)
+    {
+        <span><b>User:</b></span>
+        <select class="form-select d-inline-block ms-2" style="width:220px;"
+                @bind="_currentUserIdStr">
+            @foreach (var user in _app.Users)
+            {
+                <option value="@user.Id.ToString()">@user.Name</option>
+            }
+        </select>
+    }
+
+    <span class="ms-3"><b>Week of:</b> @_weekStart.ToString("dd MMM yyyy")</span>
+</div>
+
+@if (_app is null)
+{
+    <p>Loading…</p>
+}
+else
+{
+    <div class="row g-3">
+    <div class="col-12 col-lg-8">
+    <div class="card p-3 mb-3" style="max-width:900px;">
+        <h5>Add Activity</h5>
+
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Title</label>
+                <input class="form-control" @bind="_activityTitle" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Date</label>
+                <input class="form-control" type="text" placeholder="yyyy-mm-dd" @bind="_activityDate" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Start</label>
+                <input class="form-control" type="text" placeholder="HH:mm" @bind="_activityStart" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">End</label>
+                <input class="form-control" type="text" placeholder="HH:mm" @bind="_activityEnd" />
+            </div>
+
+            <div class="col-md-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" @bind="_recurringWeekly" />
+                    <label class="form-check-label">Recurring weekly</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" @bind="_privateEvent" />
+                    <label class="form-check-label">Private</label>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-success mt-3" @onclick="AddActivity">Add Activity</button>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="alert alert-danger mt-3">@_error</div>
+        }
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th style="width:110px;">Time</th>
+                @foreach (var d in _days)
+                {
+                    <th>@d.ToString("ddd dd")</th>
+                }
+            </tr>
+        </thead>
+
+        <tbody>
+            @for (int hour = 8; hour <= 20; hour++)
+            {
+                <tr style="height:60px;">
+                    <td><b>@($"{hour:00}:00")</b></td>
+
+                    @foreach (var day in _days)
+                    {
+                        <td style="vertical-align:top;">
+                            @foreach (var e in EventsForCell(day, hour))
+                            {
+                                <div style="border:1px solid #999; border-left:6px solid @ColorFor(e.Type); padding:4px; margin-bottom:4px; font-size:0.85rem;">
+                                    <div><b>@e.Title</b></div>
+                                    <div>@e.Start.ToString("HH:mm")–@e.End.ToString("HH:mm")</div>
+                                    <div class="text-muted">@e.Type</div>
+
+                                    @if (!string.IsNullOrWhiteSpace(e.Reason))
+                                    {
+                                        <div class="text-muted">@e.Reason</div>
+                                    }
+                                </div>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+        </div>  @* closes col-12 col-lg-8 *@
+
+        @* Legend panel: keep simple for beta demo. Polish later if time. *@
+
+        <div class="col-12 col-lg-4">
+            <div class="card p-3 mb-3">
+                <h5 class="mb-3">Legend</h5>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #3b82f6;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Lecture</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #a855f7;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Activity</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #ef4444;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Study</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #22c55e;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Make-up Study</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="display:inline-block;width:14px;height:14px;border-left:6px solid #f59e0b;border-top:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;margin-right:10px;"></span>
+                    <span>Group Study</span>
+                </div>
+                <hr class="my-3" />
+
+                <div class="d-flex align-items-center mb-2">
+                    <span style="font-size:0.9rem; margin-right:10px;">⚠️</span>
+                    <span>Schedule adjusted (conflict)</span>
+                </div>
+
+                <div class="text-muted mt-1" style="font-size:0.8rem; opacity:0.85; margin-left:22px;">
+                    Example reason: “Moved due to activity: Football”
+                </div>
+            </div>
+        </div>
+    </div> @* closes row *@
+}
+
+@code {
+    private AppState? _app;
+
+    // Bind <select> to string to avoid Guid-binding DOM errors
+    private string _currentUserIdStr = "";
+
+    private DateTime _weekStart;
+    private List<DateTime> _days = new();
+
+    // Form fields (strings for stability)
+    private string _activityTitle = "Football";
+    private string _activityDate = DateTime.Today.ToString("yyyy-MM-dd");
+    private string _activityStart = "18:00"; // text HH:mm
+    private string _activityEnd = "20:00";   // text HH:mm
+    private bool _recurringWeekly = false;
+    private bool _privateEvent = false;
+
+    private string _lastAction = "none";
+    private string? _error;
+    private string? _fatal;
+
+    private async Task GeneratePlan()
+    {
+        if (_app is null) return;
+
+        if (!Guid.TryParse(_currentUserIdStr, out var userId))
+        {
+            _lastAction = "Select a user first.";
+            StateHasChanged();
+            return;
+        }
+
+        var count = await Scheduler.GenerateStudyPlanForWeekAsync(userId, _weekStart);
+        _app = await State.ReloadAsync();
+
+        _lastAction = $"Generated {count} study blocks";
+        StateHasChanged();
+    }
+
+    private async Task ClearPlan()
+    {
+        if (_app is null) return;
+
+        if (!Guid.TryParse(_currentUserIdStr, out var userId))
+        {
+            _lastAction = "Select a user first.";
+            StateHasChanged();
+            return;
+        }
+
+        var removed = await Scheduler.ClearStudyBlocksForWeekAsync(userId, _weekStart);
+        _app = await State.ReloadAsync();
+
+        _lastAction = $"Cleared {removed} study/makeup blocks";
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+            _days = Enumerable.Range(0, 7).Select(i => _weekStart.AddDays(i)).ToList();
+
+            _app = await State.GetAsync();
+
+            var firstUserId = _app.Users.FirstOrDefault()?.Id;
+            _currentUserIdStr = firstUserId?.ToString() ?? "";
+        }
+        catch (Exception ex)
+        {
+            _fatal = ex.ToString();
+        }
+    }
+
+    private async Task SeedIfEmpty()
+    {
+        _lastAction = "Clicked Load Demo Data at " + DateTime.Now.ToLongTimeString();
+        _fatal = null;
+
+        try
+        {
+            // Force a clean state for dev/beta so button always does something
+            await State.ResetAsync();
+            await State.SeedDemoAsync();
+
+            _app = await State.ReloadAsync();
+
+            var firstUserId = _app.Users.FirstOrDefault()?.Id;
+            _currentUserIdStr = firstUserId?.ToString() ?? "";
+
+            _lastAction += " — Seed completed";
+        }
+        catch (Exception ex)
+        {
+            _fatal = ex.ToString();
+            _lastAction += " — ERROR";
+        }
+
+        StateHasChanged();
+    }
+
+    private void PrevWeek()
+    {
+        _weekStart = _weekStart.AddDays(-7);
+        _days = Enumerable.Range(0, 7).Select(i => _weekStart.AddDays(i)).ToList();
+    }
+
+    private void NextWeek()
+    {
+        _weekStart = _weekStart.AddDays(7);
+        _days = Enumerable.Range(0, 7).Select(i => _weekStart.AddDays(i)).ToList();
+    }
+
+    private async Task AddActivity()
+    {
+        _error = null;
+
+        if (_app is null)
+            return;
+
+        if (!Guid.TryParse(_currentUserIdStr, out var userId))
+        {
+            _error = "Select a user first.";
+            return;
+        }
+
+        if (!DateTime.TryParse(_activityDate, out var day))
+        {
+            _error = "Invalid date.";
+            return;
+        }
+
+        if (!TimeSpan.TryParse(_activityStart, out var startTime))
+        {
+            _error = "Invalid start time. Use HH:mm (e.g., 18:00).";
+            return;
+        }
+
+        if (!TimeSpan.TryParse(_activityEnd, out var endTime))
+        {
+            _error = "Invalid end time. Use HH:mm (e.g., 20:00).";
+            return;
+        }
+
+        var start = day.Date + startTime;
+        var end = day.Date + endTime;
+
+        if (end <= start)
+        {
+            _error = "End time must be after start time.";
+            return;
+        }
+
+        var ev = new CalendarEvent
+            {
+                OwnerUserId = userId,
+                Type = EventType.Activity,
+                Title = _activityTitle,
+                IsPrivate = _privateEvent,
+                Start = start,
+                End = end,
+                Recurrence = _recurringWeekly
+                    ? new RecurrenceRule { IsRecurringWeekly = true, DayOfWeek = start.DayOfWeek }
+                    : null
+            };
+
+        _app.Events.Add(ev);
+        await State.SaveAsync();
+
+        _lastAction = "Added activity at " + DateTime.Now.ToLongTimeString();
+        StateHasChanged();
+
+        var created = await Scheduler.ResolveConflictsForWeekAsync(userId, _weekStart, ev.Id);
+        _app = await State.ReloadAsync();
+
+        _lastAction = $"Added activity + rescheduled {created} make-up blocks";
+        StateHasChanged();
+
+    }
+
+    private IEnumerable<CalendarEvent> EventsForCell(DateTime day, int hour)
+    {
+        if (_app is null) return Enumerable.Empty<CalendarEvent>();
+        if (!Guid.TryParse(_currentUserIdStr, out var userId)) return Enumerable.Empty<CalendarEvent>();
+
+        var cellStart = day.Date.AddHours(hour);
+        var cellEnd = day.Date.AddHours(hour + 1);
+
+        var events = ExpandRecurring(
+            _app.Events.Where(e => e.OwnerUserId == userId),
+            _weekStart, _weekStart.AddDays(7)
+        );
+
+        return events.Where(e => e.Start < cellEnd && e.End > cellStart)
+                     .OrderBy(e => e.Start);
+    }
+
+    private IEnumerable<CalendarEvent> ExpandRecurring(IEnumerable<CalendarEvent> events, DateTime rangeStart, DateTime rangeEnd)
+    {
+        foreach (var e in events)
+        {
+            if (e.Recurrence?.IsRecurringWeekly == true && e.Recurrence.DayOfWeek is DayOfWeek dow)
+            {
+                var day = rangeStart.Date;
+                while (day < rangeEnd.Date)
+                {
+                    if (day.DayOfWeek == dow)
+                    {
+                        var start = day.AddHours(e.Start.Hour).AddMinutes(e.Start.Minute);
+                        var end = day.AddHours(e.End.Hour).AddMinutes(e.End.Minute);
+
+                        yield return new CalendarEvent
+                            {
+                                Id = e.Id,
+                                OwnerUserId = e.OwnerUserId,
+                                Type = e.Type,
+                                Title = e.Title,
+                                IsPrivate = e.IsPrivate,
+                                Start = start,
+                                End = end,
+                                AssignmentId = e.AssignmentId,
+                                Reason = e.Reason
+                            };
+                        break;
+                    }
+                    day = day.AddDays(1);
+                }
+            }
+            else
+            {
+                if (e.Start < rangeEnd && e.End > rangeStart)
+                    yield return e;
+            }
+        }
+    }
+
+    private static DateTime StartOfWeek(DateTime dt, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (dt.DayOfWeek - startOfWeek)) % 7;
+        return dt.Date.AddDays(-diff);
+    }
+
+    private static string ColorFor(EventType t) => t switch
+    {
+        EventType.Lecture => "#3b82f6",
+        EventType.Activity => "#a855f7",
+        EventType.Study => "#ef4444",
+        EventType.MakeUp => "#22c55e",
+        EventType.GroupStudy => "#f59e0b",
+        _ => "#999"
+    };
+}

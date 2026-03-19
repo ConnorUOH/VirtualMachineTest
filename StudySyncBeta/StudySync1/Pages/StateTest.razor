@@ -1,0 +1,49 @@
+﻿@page "/state-test"
+@using Microsoft.AspNetCore.Components.Web
+@rendermode Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer
+@using StudySync1.Models
+@using StudySync1.Services
+@inject AppStateService State
+
+
+<h3>State Test</h3>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="Seed">Seed Demo Data</button>
+    <button class="btn btn-secondary ms-2" @onclick="Reload">Reload</button>
+</div>
+
+@if (_app is null)
+{
+    <p>Loading…</p>
+}
+else
+{
+    <p><b>Users:</b> @_app.Users.Count</p>
+    <p><b>Events:</b> @_app.Events.Count</p>
+    <p><b>Assignments:</b> @_app.Assignments.Count</p>
+    <p><b>Groups:</b> @_app.Groups.Count</p>
+    <p class="text-muted">
+        JSON file should be created at: <code>App_Data/AppState.json</code>
+    </p>
+}
+
+@code {
+    private AppState? _app;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _app = await State.GetAsync();
+    }
+
+    private async Task Seed()
+    {
+        await State.SeedDemoAsync();
+        _app = await State.GetAsync();
+    }
+
+    private async Task Reload()
+    {
+        _app = await State.GetAsync();
+    }
+}

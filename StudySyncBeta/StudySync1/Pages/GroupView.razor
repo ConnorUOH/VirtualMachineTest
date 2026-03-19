@@ -1,0 +1,294 @@
+﻿@page "/group"
+@using StudySync1.Models
+@using StudySync1.Services
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Forms
+@rendermode Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer
+
+@inject AppStateService State
+@inject IGroupService Groups
+
+<h3>Group Availability</h3>
+
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="alert alert-danger">@_error</div>
+}
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="Load">Reload State</button>
+    <button class="btn btn-secondary ms-2" @onclick="PrevWeek">← Prev</button>
+    <button class="btn btn-secondary ms-2" @onclick="NextWeek">Next →</button>
+    <span class="ms-3"><b>Week of:</b> @_weekStart.ToString("dd MMM yyyy")</span>
+</div>
+
+@if (_app is null)
+{
+    <p>Loading…</p>
+}
+else if (_app.Groups.Count == 0)
+{
+    <p>No groups found. Click "Load Demo Data" on /week first (it seeds Team Alpha).</p>
+}
+else
+{
+    <div class="card p-3 mb-3" style="max-width:1100px;">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label"><b>Group</b></label>
+
+                <select class="form-select"
+                        @bind="_groupIdStr"
+                        @bind:after="OnGroupChanged">
+                    @foreach (var g in _app.Groups)
+                    {
+                        <option value="@g.Id.ToString()">@g.Name</option>
+                    }
+                </select>
+
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" @bind="_privacyMode" />
+                    <label class="form-check-label">Privacy mode (hide private titles)</label>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <label class="form-label"><b>Members</b></label>
+
+                @if (_selectedGroup is null)
+                {
+                    <p class="text-muted">Select a group first.</p>
+                }
+                else
+                {
+                    <div class="d-flex flex-wrap gap-3">
+                        @foreach (var uid in _selectedGroup.MemberUserIds)
+                        {
+                            var user = _app.Users.FirstOrDefault(u => u.Id == uid);
+                            var name = user?.Name ?? uid.ToString();
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       checked="@_memberSelection.Contains(uid)"
+                                       @onchange="(e) => ToggleMember(uid, (bool)e.Value!)" />
+                                <label class="form-check-label">@name</label>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button class="btn btn-success" @onclick="FindSlots">Find common 1-hour slots</button>
+        </div>
+    </div>
+
+    @if (_slots.Count > 0)
+    {
+        <div class="card p-3 mb-3" style="max-width:1100px;">
+            <h5>Common Free Slots (1 hour)</h5>
+
+            <div class="mb-2 text-muted">Select a slot then create a group study session.</div>
+
+            <div class="list-group" style="max-height:360px; overflow:auto;">
+                <InputRadioGroup TValue="int" @bind-Value="_selectedSlotIndex">
+                    @for (int i = 0; i < _slots.Count; i++)
+                    {
+                        var s = _slots[i];
+                        var label = $"{s.Start:ddd dd MMM} — {s.Start:HH:mm}–{s.End:HH:mm}";
+
+                        <label class="list-group-item d-flex align-items-center gap-2">
+                            <InputRadio TValue="int" Value="@i" />
+                            <span>@label</span>
+                        </label>
+                    }
+                </InputRadioGroup>
+            </div>
+
+            <button class="btn btn-primary mt-3" @onclick="CreateSession" disabled="@(_selectedSlotIndex < 0)">
+                Create Group Session
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(_status))
+            {
+                <div class="alert alert-info mt-3">@_status</div>
+            }
+        </div>
+    }
+
+    @if (_privacyMode && _selectedGroup is not null)
+    {
+        <div class="card p-3" style="max-width:1100px;">
+            <h5>Privacy Preview</h5>
+            <div class="text-muted mb-2">
+                Shows a small sample of upcoming events for selected members (private ones are masked).
+            </div>
+
+            @foreach (var uid in _memberSelection)
+            {
+                var user = _app.Users.FirstOrDefault(u => u.Id == uid);
+
+                <div class="mb-3">
+                    <b>@(user?.Name ?? uid.ToString())</b>
+
+                    <ul class="mb-0">
+                        @foreach (var ev in _app.Events.Where(e => e.OwnerUserId == uid)
+                            .OrderBy(e => e.Start)
+                            .Take(5))
+                        {
+                            var title = ev.IsPrivate ? "Private" : ev.Title;
+                            <li>@title — @ev.Start.ToString("ddd HH:mm")</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private AppState? _app;
+
+    private DateTime _weekStart = StartOfWeek(DateTime.Today, DayOfWeek.Monday);
+
+    private string _groupIdStr = "";
+    private Group? _selectedGroup;
+
+    private HashSet<Guid> _memberSelection = new();
+
+    private bool _privacyMode = true;
+
+    private List<(DateTime Start, DateTime End)> _slots = new();
+    private int _selectedSlotIndex = -1;
+
+    private string? _error;
+    private string? _status;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _error = null;
+        _status = null;
+
+        _app = await State.ReloadAsync();
+
+        if (_app.Groups.Count > 0)
+        {
+            _groupIdStr = _app.Groups[0].Id.ToString();
+            UpdateSelectedGroup();
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnGroupChanged()
+    {
+        UpdateSelectedGroup();
+        StateHasChanged();
+    }
+
+    private void UpdateSelectedGroup()
+    {
+        _selectedGroup = null;
+        _memberSelection.Clear();
+        _slots.Clear();
+        _selectedSlotIndex = -1;
+
+        if (_app is null) return;
+        if (!Guid.TryParse(_groupIdStr, out var gid)) return;
+
+        _selectedGroup = _app.Groups.FirstOrDefault(g => g.Id == gid);
+        if (_selectedGroup is null) return;
+
+        // default: select all members
+        foreach (var uid in _selectedGroup.MemberUserIds)
+            _memberSelection.Add(uid);
+    }
+
+    private void ToggleMember(Guid uid, bool isChecked)
+    {
+        if (isChecked) _memberSelection.Add(uid);
+        else _memberSelection.Remove(uid);
+    }
+
+    private void PrevWeek()
+    {
+        _weekStart = _weekStart.AddDays(-7);
+        _slots.Clear();
+        _selectedSlotIndex = -1;
+        _status = null;
+    }
+
+    private void NextWeek()
+    {
+        _weekStart = _weekStart.AddDays(7);
+        _slots.Clear();
+        _selectedSlotIndex = -1;
+        _status = null;
+    }
+
+    private async Task FindSlots()
+    {
+        _error = null;
+        _status = null;
+        _slots.Clear();
+        _selectedSlotIndex = -1;
+
+        if (_app is null) return;
+
+        if (!Guid.TryParse(_groupIdStr, out var gid))
+        {
+            _error = "Invalid group selection.";
+            return;
+        }
+
+        var members = _memberSelection.ToList();
+        if (members.Count == 0)
+        {
+            _error = "Select at least one member.";
+            return;
+        }
+
+        _slots = await Groups.FindCommonFreeSlotsAsync(gid, members, _weekStart);
+        if (_slots.Count == 0)
+            _status = "No common free 1-hour slots found for this week.";
+
+        StateHasChanged();
+    }
+
+    private async Task CreateSession()
+    {
+        _error = null;
+
+        if (_app is null) return;
+
+        if (!Guid.TryParse(_groupIdStr, out var gid))
+        {
+            _error = "Invalid group selection.";
+            return;
+        }
+
+        if (_selectedSlotIndex < 0 || _selectedSlotIndex >= _slots.Count)
+        {
+            _error = "Select a slot first.";
+            return;
+        }
+
+        var members = _memberSelection.ToList();
+        var slot = _slots[_selectedSlotIndex];
+
+        var created = await Groups.CreateGroupStudySessionAsync(gid, members, slot.Start);
+        _app = await State.ReloadAsync();
+
+        _status = $"Created group study session for {created} members at {slot.Start:ddd HH:mm}.";
+        StateHasChanged();
+    }
+
+    private static DateTime StartOfWeek(DateTime dt, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (dt.DayOfWeek - startOfWeek)) % 7;
+        return dt.Date.AddDays(-diff);
+    }
+}
