@@ -19,7 +19,7 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Install Test Platform
-      working-directory: /home/runner/work/group-project-repo-2025-2026-v2-se_02/group-project-repo-2025-2026-v2-se_02/prototype1
+      working-directory: /home/runner/work/VirtualMachineTest/VirtualMachineTest/prototype1
       run: dotnet add package Microsoft.TestPlatform --version 17.5.0
 
     - name: Dependency Restore
