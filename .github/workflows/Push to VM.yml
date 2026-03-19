@@ -17,7 +17,7 @@ jobs:
       shell: powershell
 
       run: |
-       $src = "${env:VirtualMachineTest}\*"
+       $src = "${env:GITHUB_WORKSPACE}\*"
        $dst = "C:\inetpub\wwwroot\"
 
        New-Item -ItemType Directory -Force -Path $dst | Out-Null
