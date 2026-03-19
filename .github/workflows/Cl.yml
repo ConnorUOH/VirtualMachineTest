@@ -1,0 +1,32 @@
+name: StudySync Tests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Setup .NET environment
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install Test Platform
+      working-directory: /home/runner/work/group-project-repo-2025-2026-v2-se_02/group-project-repo-2025-2026-v2-se_02/prototype1
+      run: dotnet add package Microsoft.TestPlatform --version 17.5.0
+
+    - name: Dependency Restore
+      run: dotnet restore
+
+    - name: Project Build
+      run: dotnet build
+
+    - name: Project Test
+      run: dotnet test
