@@ -16,7 +16,7 @@ jobs:
     - name: Deploy to IIS folder
       shell: powershell
 
-      run: 
+      run: |
        $src = "${env:VirtualMachineTest}\*"
        $dst = "C:\inetpub\wwwroot\"
 
