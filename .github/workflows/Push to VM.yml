@@ -1,0 +1,24 @@
+name: Push To Windows VM v2
+
+
+on:
+ push:
+  branches: [main]
+
+
+jobs:
+  deploy:
+   runs-on: self-hosted
+
+
+   steps:
+    - uses: actions/checkout@v4
+    - name: Deploy to IIS folder
+      shell: powershell
+
+      run: 
+       $src = "${env:group-project-repo-2025-2026-v2-se_02}\*"
+       $dst = "C:\inetpub\wwwroot\"
+
+       New-Item -ItemType Directory -Force -Path $dst | Out-Null
+       Copy-Item -Path $src -Destination $dst -Recurse -Force
